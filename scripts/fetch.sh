@@ -5,6 +5,14 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
+# A cache restore (actions/cache, running as the host runner user) can
+# hand these directories back owned by a different uid than whoever's
+# running this script (e.g. root inside the build container) — git's
+# "dubious ownership" check then refuses to touch them at all. safe.directory
+# only matches exact paths or the literal "*" (no globs), and this is an
+# ephemeral, single-purpose build container, not a real trust boundary.
+git config --global --add safe.directory '*'
+
 fetch_one() {
     local name="$1" url="$2" ref="$3" dir="$SRC_DIR/$name"
     log "fetch $name @ $ref"
