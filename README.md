@@ -53,7 +53,14 @@ CI 在 `workflow_dispatch` 或推 `v*` tag 时触发，产出的 `.deb` 作为 a
 artifact 上传。`src/`、`build/` 两个目录按 `modules.conf`/`scripts/` 的
 内容做了缓存，重跑调试同一个 ref 不用每次都从头拉源码、从头编译。
 
-这个仓库目前只产出 `.deb` 文件到 `dist/`，不包含发布到 APT 仓库的步骤。
+推 `v*` tag 触发的构建额外会把 `.deb` 发布到这个仓库的 GitHub Release
+（tag 名去掉前缀 `v` 就是 `.deb` 的包版本号，例如推 `v6.8.5-violoop1`
+会产出 `violoop-qt6_6.8.5-violoop1_arm64.deb`）；重新跑同一个 tag 会更新
+已有 release 的附件，不会报错。`workflow_dispatch` 手动触发不会创建
+release，只产出 artifact，方便调试构建本身。
+
+这个仓库目前只发布到自己的 GitHub Release，不包含发布到私有 APT 仓库的
+步骤。
 
 ## License
 
