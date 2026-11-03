@@ -23,16 +23,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: echo "PKG_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential cmake ninja-build git perl python3 pkg-config \
-            libgles2-mesa-dev libegl1-mesa-dev \
-            libfontconfig1-dev libfreetype-dev libssl-dev zlib1g-dev \
-            libdrm-dev libgbm-dev libinput-dev libudev-dev \
-            libwayland-dev wayland-protocols libxkbcommon-dev
-
       # Keyed on the scripts/pins, not on source trees: a fetched src/
       # tree is cheap to redo, but a multi-hour ninja build directory is
       # worth keeping across reruns while debugging the same ref.
@@ -42,10 +32,47 @@ jobs:
           path: |
             src
             build
-          key: qt-build-${{ runner.os }}-${{ hashFiles('modules.conf', 'scripts/**') }}
+          key: qt-build-${{ runner.os }}-bookworm-${{ hashFiles('modules.conf', 'scripts/**') }}
 
-      - name: Build and package
-        run: ./build-all.sh
+      # Build inside Debian 12 (bookworm) to match the target devices'
+      # glibc (2.36)/libstdc++/ICU — building on the ubuntu-24.04-arm
+      # *host* links against its newer glibc 2.38/ICU 74, which the
+      # target can't satisfy at runtime (one-way incompatibility, not
+      # fixable on the target side). The arm64 runner already has
+      # docker, so this doesn't need a different runner/self-hosted box.
+      - name: Build and package (inside Debian bookworm, matches target devices)
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            -e QT_PREFIX="$QT_PREFIX" -e PKG_VERSION \
+            debian:bookworm-slim \
+            bash -c '
+              set -euo pipefail
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                ca-certificates build-essential dpkg-dev binutils \
+                cmake ninja-build git perl python3 pkg-config \
+                libgles2-mesa-dev libegl1-mesa-dev \
+                libfontconfig1-dev libfreetype-dev libssl-dev zlib1g-dev \
+                libdrm-dev libgbm-dev libinput-dev libudev-dev \
+                libwayland-dev wayland-protocols libxkbcommon-dev
+              ./build-all.sh
+
+              echo "=== compatibility check: every lib must resolve cleanly against bookworm runtime libs ==="
+              missing=0
+              while IFS= read -r -d "" so; do
+                out="$(ldd "$so" 2>&1)" || true
+                if echo "$out" | grep -qi "not found"; then
+                  echo "--- $so ---"
+                  echo "$out" | grep -i "not found"
+                  missing=1
+                fi
+              done < <(find "$QT_PREFIX/lib" -maxdepth 1 -name "*.so*" -print0)
+              if [ "$missing" -ne 0 ]; then
+                echo "compatibility check FAILED: see unresolved deps above"
+                exit 1
+              fi
+              echo "compatibility check passed"
+            '
 
       - name: Upload .deb
         uses: actions/upload-artifact@v4
