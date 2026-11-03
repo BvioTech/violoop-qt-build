@@ -62,3 +62,15 @@ artifact 上传（还没接发布流程）。`src/`、`build/` 两个目录按
 - CI（GitHub Actions 自动触发构建）——独立任务，不阻塞先把脚本手动跑通。
 - 把其余 5 个模块也镶一份到 `BvioTech` 下（更保守的 GPL 合规方案）——
   已经决定先不做。
+
+## License
+
+本仓库自己的内容（构建脚本、`modules.conf`、CI 配置、文档）以
+**GPL-3.0-or-later** 开源，见 `LICENSE`。
+
+这**不**改变构建产出物（`dist/*.deb`）里打包的 Qt 本身的授权——Qt 各模块
+沿用各自上游的授权（主要是 LGPL-3.0，部分 GPL-3.0/商业双授权，见各模块
+源码自带的 `LICENSES/`），这些源码只在构建时拉取到 `.gitignore` 掉的
+`src/` 目录，不会被提交进这个仓库。`qtquicktimeline` 的 fork
+（`BvioTech/qtquicktimeline`）本身也保留了它原来的 Qt 授权，不受这个仓库
+License 的影响。

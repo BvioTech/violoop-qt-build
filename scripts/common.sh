@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Shared config/helpers for the build scripts. Source this, don't run it.
 
 : "${QT_PREFIX:=/opt/violoop-qt6}"

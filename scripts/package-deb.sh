@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Packages the installed $QT_PREFIX tree into a .deb. Run build.sh first.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"

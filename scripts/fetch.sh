@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Fetches/updates each module's source into src/<module>/ at the ref
 # pinned in modules.conf. Safe to re-run (fetch + hard reset to ref).
 set -euo pipefail

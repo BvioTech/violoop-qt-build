@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Builds+installs every module in modules.conf, in file order, into
 # $QT_PREFIX. Must run fetch.sh first. Re-run is incremental (ninja/cmake
 # caches are kept under build/<module>/).
