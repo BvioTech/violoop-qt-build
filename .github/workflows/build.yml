@@ -1,0 +1,47 @@
+name: Build Qt
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    # Native arm64 build, no cross-compile toolchain/sysroot needed.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    env:
+      QT_PREFIX: /opt/violoop-qt6
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build git perl python3 pkg-config \
+            libgles2-mesa-dev libegl1-mesa-dev \
+            libfontconfig1-dev libfreetype-dev libssl-dev zlib1g-dev \
+            libdrm-dev libgbm-dev libinput-dev libudev-dev \
+            libwayland-dev wayland-protocols libxkbcommon-dev
+
+      # Keyed on the scripts/pins, not on source trees: a fetched src/
+      # tree is cheap to redo, but a multi-hour ninja build directory is
+      # worth keeping across reruns while debugging the same ref.
+      - name: Cache build directories
+        uses: actions/cache@v4
+        with:
+          path: |
+            src
+            build
+          key: qt-build-${{ runner.os }}-${{ hashFiles('modules.conf', 'scripts/**') }}
+
+      - name: Build and package
+        run: ./build-all.sh
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: violoop-qt6-deb
+          path: dist/*.deb

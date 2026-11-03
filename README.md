@@ -32,6 +32,12 @@ commit 本身的 message。
 
 ## 用法
 
+构建机器是 **arm64 原生**（目前在 GitHub Actions 的 `ubuntu-24.04-arm`
+机型上跑，见 `.github/workflows/build.yml`），不是交叉编译，不需要额外的
+工具链/sysroot——`configure`/`qt-configure-module` 用的是构建机自己的
+编译器和系统头文件/库（`libgles2-mesa-dev`/`libegl1-mesa-dev` 等，装好
+之后本地也能跑同样的脚本）。
+
 ```bash
 export QT_PREFIX=/opt/violoop-qt6   # 默认就是这个，独立于系统 qt6-*
 ./build-all.sh                      # fetch + build + package 一次跑完
@@ -39,6 +45,11 @@ export QT_PREFIX=/opt/violoop-qt6   # 默认就是这个，独立于系统 qt6-*
 
 也可以分步跑：`scripts/fetch.sh`、`scripts/build.sh`、
 `scripts/package-deb.sh`（每一步都是增量/可重复执行的）。
+
+CI 在 `workflow_dispatch` 或推 `v*` tag 时触发，产出的 `.deb` 作为 action
+artifact 上传（还没接发布流程）。`src/`、`build/` 两个目录按
+`modules.conf`/`scripts/` 的内容做了缓存，方便重跑调试同一个 ref 时不用
+每次都从头拉源码、从头编译。
 
 构建顺序（`modules.conf` 文件里的顺序即构建顺序）：
 `qtbase` → `qtshadertools` → `qtdeclarative` → `qtwayland`/
