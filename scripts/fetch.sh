@@ -15,6 +15,9 @@ fetch_one() {
     fi
     git -C "$dir" fetch --depth 1 origin "refs/tags/$ref:refs/tags/$ref"
     git -C "$dir" checkout -q --detach "$ref"
+    # qtquick3d vendors assimp as a submodule (the shallow tag fetch above
+    # doesn't pull it); a no-op if the module has no .gitmodules.
+    git -C "$dir" submodule update --init --depth 1 --recursive
 }
 
 mkdir -p "$SRC_DIR"
