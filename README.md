@@ -68,8 +68,15 @@ release，只产出 artifact，方便调试构建本身。
 **GPL-3.0-or-later** 开源，见 `LICENSE`。
 
 这**不**改变构建产出物（`dist/*.deb`）里打包的 Qt 本身的授权——Qt 各模块
-沿用各自上游的授权（主要是 LGPL-3.0，部分 GPL-3.0/商业双授权，见各模块
-源码自带的 `LICENSES/`），这些源码只在构建时拉取到 `.gitignore` 掉的
+沿用各自上游的授权（见各模块源码自带的 `LICENSES/`、`REUSE.toml`）。
+**不是全部 LGPL**：`qtquick3d`、`qtquicktimeline` 和 `qtwayland` 里的
+compositor 库（`libQt6WaylandCompositor`）开源版只有 GPL-3.0-only（或
+商业授权），没有 LGPL 选项，链接它们的程序要按 GPL 发布；`qtbase`、
+`qtshadertools`、`qtdeclarative` 和 `qtwayland` 的 client 部分是
+LGPL-3.0-only（或 GPL-2.0-only / GPL-3.0-only）。包内
+`/usr/share/doc/violoop-qt6/copyright` 的模块表逐个列出，由
+`scripts/package-deb.sh` 的 `module_license()` 生成，加模块时要一并
+补上。这些源码只在构建时拉取到 `.gitignore` 掉的
 `src/` 目录，不会被提交进这个仓库。`qtquicktimeline` 的 fork
 （`BvioTech/qtquicktimeline`）本身也保留了它原来的 Qt 授权，不受这个仓库
 License 的影响。

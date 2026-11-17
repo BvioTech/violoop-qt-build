@@ -94,12 +94,33 @@ log "Depends: ${PKG_DEPENDS:-<none detected>}"
     echo " Installed to $QT_PREFIX, does not touch Debian's system qt6-* packages."
 } > "$STAGE/DEBIAN/control"
 
-# Debian-style copyright file: this package's *contents* are Qt itself
-# (each module under its own upstream license, mostly LGPL-3.0-only, with
-# per-file detail in each module's own LICENSES/+REUSE.toml at the exact
-# ref below — that in-tree data is authoritative, this is a pointer to
-# it, not a substitute for it). The *packaging* (these build scripts) is
-# a separate, our-own GPL-3.0-or-later work, listed separately below.
+# Debian-style copyright file: this package's *contents* are Qt itself,
+# each module under its own upstream license. They are NOT all LGPL: Qt
+# Quick 3D, Qt Quick Timeline and the Qt Wayland Compositor library are
+# offered only as "LicenseRef-Qt-Commercial OR GPL-3.0-only", so anything
+# linking those is bound by the GPL. The per-file detail lives in each
+# module's own LICENSES/ + REUSE.toml at the exact ref below — that
+# in-tree data is authoritative, this is a pointer to it, not a
+# substitute for it. The *packaging* (these build scripts) is a separate,
+# our-own GPL-3.0-or-later work, listed separately below.
+#
+# Prints the open-source license of a module's libraries, as read from
+# the SPDX headers of its sources at the refs in modules.conf. Dies on a
+# module it does not know, so that adding one to modules.conf forces
+# whoever adds it to look its license up instead of inheriting a guess.
+module_license() {
+    case "$1" in
+        qtbase|qtshadertools|qtdeclarative)
+            echo "LGPL-3.0-only or GPL-2.0-only or GPL-3.0-only" ;;
+        qtwayland)
+            echo "LGPL-3.0-only or GPL-2.0-only or GPL-3.0-only (client, plugins); GPL-3.0-only (libQt6WaylandCompositor)" ;;
+        qtquicktimeline|qtquick3d)
+            echo "GPL-3.0-only" ;;
+        *)
+            die "no license recorded for module '$1' — check its REUSE.toml/SPDX headers and add it to module_license() in $0" ;;
+    esac
+}
+
 DOC_DIR="$STAGE/usr/share/doc/$PKG_NAME"
 mkdir -p "$DOC_DIR"
 {
@@ -109,15 +130,23 @@ mkdir -p "$DOC_DIR"
     echo
     echo "Files: *"
     echo "Copyright: The Qt Company Ltd. and contributors"
-    echo "License: LGPL-3.0-only"
-    echo " Qt is multi-licensed on a per-file basis. The modules bundled in"
-    echo " this package are predominantly LGPL-3.0-only, with a long tail of"
-    echo " third-party components under their own licenses (Apache-2.0, MIT,"
-    echo " BSD, GPL-3.0-only with the Qt-GPL-exception, etc). This is a"
-    echo " packaging-level summary, not a legal determination for any"
-    echo " specific file — the authoritative, file-level license data ships"
-    echo " inside each module's own source tree (LICENSES/, REUSE.toml,"
-    echo " licenseRule.json) at the exact ref listed below."
+    echo "License: LGPL-3.0-only and GPL-3.0-only"
+    echo " Qt is licensed per module and per file; this package is not"
+    echo " uniformly LGPL. Of the modules bundled here, Qt Quick 3D, Qt Quick"
+    echo " Timeline and the Qt Wayland Compositor library are available as"
+    echo " open source under GPL-3.0-only alone (no LGPL option), so a"
+    echo " program that links any of them must itself comply with the GPL."
+    echo " The other libraries are available under LGPL-3.0-only (or"
+    echo " GPL-2.0-only, or GPL-3.0-only). The module table below gives the"
+    echo " license of each. There is also a long tail of third-party"
+    echo " components under their own licenses (Apache-2.0, MIT, BSD, etc.),"
+    echo " and build tools under GPL-3.0-only with the Qt-GPL-exception."
+    echo " This is a packaging-level summary, not a legal determination for"
+    echo " any specific file — the authoritative, file-level license data"
+    echo " ships inside each module's own source tree (LICENSES/, REUSE.toml,"
+    echo " licenseRule.json) at the exact ref listed below. On Debian"
+    echo " systems the texts of the LGPL and GPL version 3 are in"
+    echo " /usr/share/common-licenses/LGPL-3 and /usr/share/common-licenses/GPL-3."
     echo
     while read -r name url ref; do
         [ -z "$name" ] && continue
@@ -125,6 +154,7 @@ mkdir -p "$DOC_DIR"
         echo "Module: $name"
         echo "Source: $url"
         echo "Ref: $ref"
+        echo "License: $(module_license "$name")"
         echo
     done < "$MODULES_FILE"
     echo "Comment:"
